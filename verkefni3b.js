@@ -1,84 +1,133 @@
+// scene size
+var WIDTH = window.innerWidth;
+var HEIGHT = window.innerHeight;
 
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+//camera attributes
+var VIEW_ANGLE = 45;
+var ASPECT = WIDTH / HEIGHT;
+var NEAR = 0.1;
+var FAR = 10000;
 
+// attach to dom element
+var container =
+    document.querySelector('#container');
 
+//renderer
 var renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+//camera
+var camera =
+    new THREE.PerspectiveCamera(
+        VIEW_ANGLE,
+        ASPECT,
+        NEAR,
+        FAR
+    );
+camera.position.z = 1000;
+
+//vars for the dragging
+var spheres = [];
+var controls = false;
+
+//scene
+var scene = new THREE.Scene();
+
+//add camera to scene
+scene.add(camera);
+
+//start renderer (use browser width and height)
+renderer.setSize(WIDTH, HEIGHT);
+
+// Attach the renderer-supplied
+// DOM element.
+container.appendChild(renderer.domElement);
+
+// create a point light
+var pointLight =
+    new THREE.PointLight(0xFFFFFF);
+
+// set its position
+pointLight.position.x = 10;
+pointLight.position.y = 50;
+pointLight.position.z = 130;
+
+// add to the scene
+scene.add(pointLight);
+
+// set up sphere vars
+var RADIUS = 50;
+var SEGMENTS = 16;
+var RINGS = 16;
+
+// set up sphere mesh
+for (var i = 0; i < 5; i++) {
+
+    // create sphere mesh
+    var sphereMaterial =
+    new THREE.MeshLambertMaterial(
+    {
+        color: Math.random() * 0xffffff
+    });
+
+    var sphere = new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            RADIUS,
+            SEGMENTS,
+            RINGS),
+
+        sphereMaterial);
+    
+    //make sphere visible
+    sphere.position.x = Math.random() * 1000 - 500;
+    sphere.position.y = Math.random() * 600 - 300;
+    sphere.position.z = Math.random() * 800 - 400;
+
+    sphere.castShadow = true;
+    sphere.receiveShadow = true;
+    //add sphere to scene
+    scene.add(sphere);
+    spheres.push(sphere);
+}
+
+// rotation
+var SPEED = 0.01;
+
+function rotateSphere() {
+    for (i = 0; i < spheres.length; i++) {
+        spheres[i].rotation.x -= SPEED * 2;
+        spheres[i].rotation.y -= SPEED;
+        spheres[i].rotation.z -= SPEED * 3;
+    }
+  
+}
+
+//interaction (dragging the sphere)
+var dragControls = new THREE.DragControls(spheres, camera, renderer.domElement);
+dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; });
+dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
+
+var loader = new THREE.OBJLoader();
+
+		// load a resource
+		loader.load(
+			// resource URL
+			'three.js/examples/models/3ds/portalgun.3ds',
+			// Function when resource is loaded
+			function ( object ) {
+				scene.add( object );
+			}
+		);
 
 
-var cubegeometry = new THREE.CubeGeometry(1,1,1);
-var cubematerial = new THREE.MeshBasicMaterial({wireframe: true, color: 0x000000});
 
-
-var cube = new THREE.Mesh(cubegeometry, cubematerial);
-
-
-scene.add(cube);
-
-
-camera.position.z = 5;
-
-
-var spheregeometry = new THREE.SphereGeometry(0.8, 16, 16);
-var spherematerial = new THREE.MeshBasicMaterial({wireframe: true, color: 0x000000});
-var sphere = new THREE.Mesh(spheregeometry, spherematerial);
-
-
-sphere.position.set(-2.0, 0, 0);
-
-
-scene.add(sphere);
-
-
-
-var cylindergeometry = new THREE.CylinderGeometry(0.6, 0.6, 2, 50, false);
-
-
-var cylindermaterial = new THREE.MeshLambertMaterial({wireframe: true, color: 0x000000});
-var cylinder = new THREE.Mesh(cylindergeometry, cylindermaterial);
-
-
-cylinder.position.set(2.0,0,0);
-scene.add(cylinder);
-
-
-var conegeometry = new THREE.CylinderGeometry(0, 0.6, 2, 50, false);
-var conematerial = new THREE.MeshLambertMaterial({wireframe: true, color: 0x000000});
-var cone = new THREE.Mesh(conegeometry, conematerial);
-cone.position.set(4.0,0,0);
-scene.add(cone);
-
-
-var pyramidgeometry = new THREE.CylinderGeometry(0, 0.8, 2, 4, false);
-var pyramidmaterial = new THREE.MeshBasicMaterial({wireframe: true, color: 0x000000});
-var pyramid = new THREE.Mesh(pyramidgeometry, pyramidmaterial);
-pyramid.position.set(-4.0,0,0);
-scene.add(pyramid);
-
-var render = function () {
-    requestAnimationFrame(render);
-
-
-    cube.rotation.y += 0.01;
-    cube.rotation.x += 0.01;
-    cube.rotation.z += 0.01;
-
-    sphere.rotation.y += 0.01;
-
-    cylinder.rotation.y += 0.01;
-    cylinder.rotation.x += 0.01;
-    cylinder.rotation.z += 0.01;
-
-    cone.rotation.y += 0.01;
-    cone.rotation.x += 0.01;
-
-    pyramid.rotation.y += 0.01;
-    //pyramid.rotation.x += 0.01;
-
+function update() {
+    // draw the scene
     renderer.render(scene, camera);
-};
+    rotateSphere();
 
+    // schedule frames
+    requestAnimationFrame(update);
+}
 
-render();
+// schedule first frame
+requestAnimationFrame(update);
